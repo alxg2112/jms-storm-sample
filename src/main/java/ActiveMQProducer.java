@@ -36,12 +36,11 @@ public class ActiveMQProducer {
         return instance;
     }
 
-    public void addToQueue(String from, String text) {
+    public void addToQueue(String name, String text) {
         try {
             producer = session.createProducer(destination);
-            MapMessage message = session.createMapMessage();
-            message.setString("from", from);
-            message.setString("text", text);
+            TextMessage message = session.createTextMessage();
+            message.setText(Utils.generateXmlMessage(name, text));
             producer.send(message);
         } catch (JMSException e) {
             e.printStackTrace();
@@ -62,10 +61,10 @@ public class ActiveMQProducer {
         Scanner scanner = new Scanner(System.in);
         do {
             System.out.print("Enter your name: ");
-            String from = scanner.nextLine();
+            String name = scanner.nextLine();
             System.out.print("Enter your message: ");
             String text = scanner.nextLine();
-            producer.addToQueue(from, text);
+            producer.addToQueue(name, text);
             System.out.print("Message successfully sent!\n");
             System.out.print("Do you want to send another message? (y / n) ");
         } while (!scanner.nextLine().equals("n"));

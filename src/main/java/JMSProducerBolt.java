@@ -25,19 +25,19 @@ public class JMSProducerBolt extends BaseBasicBolt {
 
     @Override
     public void execute(Tuple tuple, BasicOutputCollector basicOutputCollector) {
-        String from = tuple.getStringByField("from");
+        String name = tuple.getStringByField("name");
         String text = tuple.getStringByField("text");
 
         if (text.equals("")) {
             throw new IllegalArgumentException();
         }
 
-        producer.addToQueue(from, text);
+        producer.addToQueue(name, text);
     }
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("from", "text"));
+        outputFieldsDeclarer.declare(new Fields("name", "text"));
     }
 
     /**
@@ -68,12 +68,11 @@ public class JMSProducerBolt extends BaseBasicBolt {
             }
         }
 
-        public void addToQueue(String from, String text) {
+        public void addToQueue(String name, String text) {
             try {
                 producer = session.createProducer(destination);
-                MapMessage message = session.createMapMessage();
-                message.setString("from", from);
-                message.setString("text", text);
+                TextMessage message = session.createTextMessage();
+                message.setText(Utils.generateXmlMessage(name, text));
                 producer.send(message);
             } catch (JMSException e) {
                 e.printStackTrace();

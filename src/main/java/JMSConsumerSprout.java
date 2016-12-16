@@ -30,11 +30,11 @@ public class JMSConsumerSprout extends BaseRichSpout {
 
     @Override
     public void nextTuple() {
-        Message message = pendingMessages.poll();
+        TextMessage message = (TextMessage)pendingMessages.poll();
 
         if (message != null) {
             try {
-                collector.emit(Utils.jmsMsgToTuple(message));
+                collector.emit(Utils.xmlMsgToTuple(message.getText()));
             } catch (JMSException e) {
                 e.printStackTrace();
             }
@@ -43,7 +43,7 @@ public class JMSConsumerSprout extends BaseRichSpout {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("from", "text"));
+        outputFieldsDeclarer.declare(new Fields("name", "text"));
     }
 
     private class ActiveMQConsumer implements Runnable, ExceptionListener {
