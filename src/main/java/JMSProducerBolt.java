@@ -1,9 +1,9 @@
 import org.apache.activemq.ActiveMQConnection;
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
-import org.apache.storm.topology.BasicOutputCollector;
 import org.apache.storm.topology.OutputFieldsDeclarer;
-import org.apache.storm.topology.base.BaseBasicBolt;
+import org.apache.storm.topology.base.BaseRichBolt;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
 
@@ -13,31 +13,33 @@ import java.util.Map;
 /**
  * Bolt that submits message to ActiveMQ queue.
  */
-public class JMSProducerBolt extends BaseBasicBolt {
+public class JMSProducerBolt extends BaseRichBolt {
 
     private ActiveMQProducer producer;
-
-    @Override
-    public void prepare(Map stormConf, TopologyContext context) {
-        producer = new ActiveMQProducer();
-        super.prepare(stormConf, context);
-    }
-
-    @Override
-    public void execute(Tuple tuple, BasicOutputCollector basicOutputCollector) {
-        String name = tuple.getStringByField("name");
-        String text = tuple.getStringByField("text");
-
-        if (text.equals("")) {
-            throw new IllegalArgumentException();
-        }
-
-        producer.addToQueue(name, text);
-    }
+    private OutputCollector collector;
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
         outputFieldsDeclarer.declare(new Fields("name", "text"));
+    }
+
+    @Override
+    public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
+        producer = new ActiveMQProducer();
+        this.collector = outputCollector;
+    }
+
+    @Override
+    public void execute(Tuple tuple) {
+        String name = tuple.getStringByField("name");
+        String text = tuple.getStringByField("text");
+
+        if (text.equals("")) {
+            collector.fail(tuple);
+        } else {
+            producer.addToQueue(name, text);
+            collector.ack(tuple);
+        }
     }
 
     /**

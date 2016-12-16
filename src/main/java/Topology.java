@@ -24,7 +24,7 @@ public class Topology {
             conf.setMaxTaskParallelism(3);
             LocalCluster cluster = new LocalCluster();
             cluster.submitTopology("jmsProxy", conf, builder.createTopology());
-            Thread.sleep(100000);
+            Thread.sleep(10000);
             cluster.shutdown();
         }
     }

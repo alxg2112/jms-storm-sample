@@ -10,6 +10,7 @@ import javax.jms.*;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.logging.Logger;
 
 /**
  * Spout that consumes message from ActiveMQ queue.
@@ -19,6 +20,19 @@ public class JMSConsumerSprout extends BaseRichSpout {
     private SpoutOutputCollector collector;
     private BlockingQueue<Message> pendingMessages;
     private ActiveMQConsumer jmsConsumer;
+    private static final Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+
+//    static {
+//        FileHandler fh;
+//        try {
+//            fh = new FileHandler("JMSConsumerSpout.log");
+//            LOGGER.addHandler(fh);
+//            SimpleFormatter formatter = new SimpleFormatter();
+//            fh.setFormatter(formatter);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
 
     @Override
     public void open(Map map, TopologyContext topologyContext, SpoutOutputCollector spoutOutputCollector) {
@@ -34,7 +48,8 @@ public class JMSConsumerSprout extends BaseRichSpout {
 
         if (message != null) {
             try {
-                collector.emit(Utils.xmlMsgToTuple(message.getText()));
+                Object msgId = message.hashCode();
+                collector.emit(Utils.xmlMsgToTuple(message.getText()), msgId);
             } catch (JMSException e) {
                 e.printStackTrace();
             }
@@ -44,6 +59,11 @@ public class JMSConsumerSprout extends BaseRichSpout {
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
         outputFieldsDeclarer.declare(new Fields("name", "text"));
+    }
+
+    @Override
+    public void ack(Object msgId) {
+        LOGGER.info(String.format("Ack on msgId: %s", msgId));
     }
 
     private class ActiveMQConsumer implements Runnable, ExceptionListener {
