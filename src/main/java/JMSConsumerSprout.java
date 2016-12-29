@@ -7,9 +7,9 @@ import org.apache.storm.topology.base.BaseRichSpout;
 import org.apache.storm.tuple.Fields;
 
 import javax.jms.*;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.logging.Logger;
 
@@ -22,13 +22,14 @@ public class JMSConsumerSprout extends BaseRichSpout {
     private BlockingQueue<Message> pendingMessages;
     private ActiveMQConsumer jmsConsumer;
     private ActiveMQProducer jmsProducer;
-    private static ConcurrentHashMap<Object, Message> notAckedMessages = new ConcurrentHashMap<>();
+    private HashMap<Object, Message> messagesToAck;
     private static final Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
     @Override
     public void open(Map map, TopologyContext topologyContext, SpoutOutputCollector spoutOutputCollector) {
         collector = spoutOutputCollector;
         pendingMessages = new LinkedBlockingDeque<>();
+        messagesToAck = new HashMap<>();
         jmsConsumer = new ActiveMQConsumer();
         jmsProducer = new ActiveMQProducer("FailQueue");
     }
@@ -40,7 +41,7 @@ public class JMSConsumerSprout extends BaseRichSpout {
         if (message != null) {
             try {
                 Object msgId = message.hashCode();
-                notAckedMessages.put(msgId, message);
+                messagesToAck.put(msgId, message);
                 collector.emit(Utils.xmlMsgToTuple(message.getText()), msgId);
             } catch (JMSException e) {
                 e.printStackTrace();
@@ -56,13 +57,13 @@ public class JMSConsumerSprout extends BaseRichSpout {
     @Override
     public void ack(Object msgId) {
         LOGGER.info(String.format("Ack on msgId: %s", msgId));
-        notAckedMessages.remove(msgId);
+        messagesToAck.remove(msgId);
     }
 
     @Override
     public void fail(Object msgId) {
         LOGGER.info(String.format("Fail on msgId: %s", msgId));
-        jmsProducer.addToQueue(notAckedMessages.remove(msgId));
+        jmsProducer.addToQueue(messagesToAck.remove(msgId));
     }
 
     /**
@@ -99,7 +100,7 @@ public class JMSConsumerSprout extends BaseRichSpout {
             }
         }
 
-        public ActiveMQConsumer() {
+        private ActiveMQConsumer() {
             run();
         }
     }
