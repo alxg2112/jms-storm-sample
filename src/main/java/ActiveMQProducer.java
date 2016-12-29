@@ -8,39 +8,44 @@ import java.util.Scanner;
  * Producer class that adds messages to the ActiveMQ queue.
  */
 public class ActiveMQProducer {
-    private static final String QUEUE_NAME = "UpstreamQueue";
 
-    private static final ActiveMQProducer instance = new ActiveMQProducer();
-    private static ConnectionFactory connectionFactory;
-    private static Connection connection;
-    private static Session session;
-    private static Destination destination;
-    private static MessageProducer producer;
+    private  String queueName;
+    private ConnectionFactory connectionFactory;
+    private Connection connection;
+    private Session session;
+    private Destination destination;
+    private MessageProducer producer;
 
-    private ActiveMQProducer() {
+    public ActiveMQProducer(String queueName) {
         connectionFactory = new ActiveMQConnectionFactory(ActiveMQConnection.DEFAULT_BROKER_URL);
+        this.queueName = queueName;
+        configure();
     }
 
-    public void configure() {
+    private void configure() {
         try {
             connection = connectionFactory.createConnection();
             connection.start();
             session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-            destination = session.createQueue(QUEUE_NAME);
+            destination = session.createQueue(queueName);
+            producer = session.createProducer(destination);
         } catch (JMSException e) {
             e.printStackTrace();
         }
     }
 
-    public static ActiveMQProducer getInstance() {
-        return instance;
-    }
-
     public void addToQueue(String name, String text) {
         try {
-            producer = session.createProducer(destination);
             TextMessage message = session.createTextMessage();
             message.setText(Utils.generateXmlMessage(name, text));
+            producer.send(message);
+        } catch (JMSException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void addToQueue(Message message) {
+        try {
             producer.send(message);
         } catch (JMSException e) {
             e.printStackTrace();
@@ -56,8 +61,7 @@ public class ActiveMQProducer {
     }
 
     public static void main(String[] args) {
-        ActiveMQProducer producer = getInstance();
-        producer.configure();
+        ActiveMQProducer producer = new ActiveMQProducer("UpstreamQueue");
         Scanner scanner = new Scanner(System.in);
         do {
             System.out.print("Enter your name: ");
@@ -70,5 +74,4 @@ public class ActiveMQProducer {
         } while (!scanner.nextLine().equals("n"));
         producer.close();
     }
-
 }

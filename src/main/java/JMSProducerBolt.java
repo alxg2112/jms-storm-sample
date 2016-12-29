@@ -1,13 +1,11 @@
-import org.apache.activemq.ActiveMQConnection;
-import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
+import org.apache.storm.topology.FailedException;
 import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.topology.base.BaseRichBolt;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
 
-import javax.jms.*;
 import java.util.Map;
 
 /**
@@ -15,7 +13,7 @@ import java.util.Map;
  */
 public class JMSProducerBolt extends BaseRichBolt {
 
-    private ActiveMQProducer producer;
+    private ActiveMQProducer jmsProducer;
     private OutputCollector collector;
 
     @Override
@@ -25,68 +23,33 @@ public class JMSProducerBolt extends BaseRichBolt {
 
     @Override
     public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
-        producer = new ActiveMQProducer();
+        jmsProducer = new ActiveMQProducer("DownstreamQueue");
         this.collector = outputCollector;
     }
 
     @Override
     public void execute(Tuple tuple) {
-        String name = tuple.getStringByField("name");
-        String text = tuple.getStringByField("text");
-
-        if (text.equals("")) {
+        try {
+            processTuple(tuple);
+        } catch (FailedException e) {
             collector.fail(tuple);
-        } else {
-            producer.addToQueue(name, text);
-            collector.ack(tuple);
         }
     }
 
     /**
-     * Producer class that adds messages to the ActiveMQ queue.
+     * Validate tuple and send message to ActiveMQ queue if it's ok.
+     *
+     * @param tuple tuple to be processed.
      */
-    private static class ActiveMQProducer {
+    private void processTuple(Tuple tuple) throws FailedException {
+        String name = tuple.getStringByField("name");
+        String text = tuple.getStringByField("text");
 
-        private static final String QUEUE_NAME = "DownstreamQueue";
-        private ConnectionFactory connectionFactory;
-        private Connection connection;
-        private Session session;
-        private Destination destination;
-        private MessageProducer producer;
-
-        private ActiveMQProducer() {
-            connectionFactory = new ActiveMQConnectionFactory(ActiveMQConnection.DEFAULT_BROKER_URL);
-            configure();
-        }
-
-        private void configure() {
-            try {
-                connection = connectionFactory.createConnection();
-                connection.start();
-                session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-                destination = session.createQueue(QUEUE_NAME);
-            } catch (JMSException e) {
-                e.printStackTrace();
-            }
-        }
-
-        public void addToQueue(String name, String text) {
-            try {
-                producer = session.createProducer(destination);
-                TextMessage message = session.createTextMessage();
-                message.setText(Utils.generateXmlMessage(name, text));
-                producer.send(message);
-            } catch (JMSException e) {
-                e.printStackTrace();
-            }
-        }
-
-        public void close() {
-            try {
-                connection.close();
-            } catch (JMSException e) {
-                e.printStackTrace();
-            }
+        if (text.equals("") || name.equals("")) {
+            throw new FailedException("Message has empty text field!");
+        } else {
+            jmsProducer.addToQueue(name, text);
+            collector.ack(tuple);
         }
     }
 }
