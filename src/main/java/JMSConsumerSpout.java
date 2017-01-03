@@ -9,6 +9,7 @@ import org.apache.storm.tuple.Fields;
 import javax.jms.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 /**
@@ -21,6 +22,8 @@ public class JMSConsumerSpout extends BaseRichSpout {
     private ActiveMQProducer jmsProducer;
     private HashMap<Object, Message> messagesToAck;
     private static final Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+    public static AtomicInteger enqueuedMessages;
+    public static AtomicInteger dequeuedMessages;
 
     @Override
     public void open(Map map, TopologyContext topologyContext, SpoutOutputCollector spoutOutputCollector) {
@@ -28,6 +31,8 @@ public class JMSConsumerSpout extends BaseRichSpout {
         messagesToAck = new HashMap<>();
         jmsConsumer = new ActiveMQConsumer();
         jmsProducer = new ActiveMQProducer("FailQueue");
+        enqueuedMessages = new AtomicInteger(0);
+        dequeuedMessages = new AtomicInteger(0);
     }
 
     @Override
@@ -38,6 +43,7 @@ public class JMSConsumerSpout extends BaseRichSpout {
             try {
                 Object msgId = message.hashCode();
                 messagesToAck.put(msgId, message);
+                enqueuedMessages.getAndIncrement();
                 collector.emit(Utils.xmlMsgToTuple(message.getText()), msgId);
             } catch (JMSException e) {
                 e.printStackTrace();
@@ -53,12 +59,14 @@ public class JMSConsumerSpout extends BaseRichSpout {
     @Override
     public void ack(Object msgId) {
         LOGGER.info(String.format("Ack on msgId: %s", msgId));
+        dequeuedMessages.getAndIncrement();
         messagesToAck.remove(msgId);
     }
 
     @Override
     public void fail(Object msgId) {
         LOGGER.info(String.format("Fail on msgId: %s", msgId));
+        dequeuedMessages.getAndIncrement();
         jmsProducer.addToQueue(messagesToAck.remove(msgId));
     }
 
@@ -73,11 +81,11 @@ public class JMSConsumerSpout extends BaseRichSpout {
         private Destination destination;
         private MessageConsumer messageConsumer;
 
-        public Message getMessage() {
+        private Message getMessage() {
             Message message = null;
 
             try {
-                message = messageConsumer.receive(1000);
+                message = messageConsumer.receive(Utils.getProperty("jmsReceiveTimeout"));
             } catch (JMSException e) {
                 LOGGER.info("Exception occurred: " + e.getMessage());
             }

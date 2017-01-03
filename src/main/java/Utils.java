@@ -11,13 +11,16 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
-import java.io.StringReader;
-import java.io.StringWriter;
+import java.io.*;
+import java.util.Properties;
+import java.util.logging.Logger;
 
 /**
  * Utilities class.
  */
 public class Utils {
+
+    private static final Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
     /**
      * Generates XML message file from given name and text.
@@ -92,9 +95,33 @@ public class Utils {
             name = element.getElementsByTagName("name").item(0).getTextContent();
             text = element.getElementsByTagName("text").item(0).getTextContent();
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.info("Exception occurred: " + e.getMessage());
         }
 
         return new Values(name, text);
+    }
+
+    public static int getProperty(String property) {
+        Properties properties = new Properties();
+        InputStream input = null;
+        int propertyValue = 0;
+
+        try {
+            input = new FileInputStream("resources\\config.properties");
+            properties.load(input);
+            propertyValue = Integer.parseInt(properties.getProperty(property));
+        } catch (IOException e) {
+            LOGGER.info("Exception occurred: " + e.getMessage());
+        } finally {
+            if (input != null) {
+                try {
+                    input.close();
+                } catch (IOException e) {
+                    LOGGER.info("Exception occurred: " + e.getMessage());
+                }
+            }
+        }
+
+        return propertyValue;
     }
 }

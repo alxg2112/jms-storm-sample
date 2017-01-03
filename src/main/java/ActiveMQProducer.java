@@ -2,7 +2,6 @@ import org.apache.activemq.ActiveMQConnection;
 import org.apache.activemq.ActiveMQConnectionFactory;
 
 import javax.jms.*;
-import java.util.Scanner;
 
 /**
  * Producer class that adds messages to the ActiveMQ queue.
@@ -62,16 +61,15 @@ public class ActiveMQProducer {
 
     public static void main(String[] args) {
         ActiveMQProducer producer = new ActiveMQProducer("UpstreamQueue");
-        Scanner scanner = new Scanner(System.in);
-        do {
-            System.out.print("Enter your name: ");
-            String name = scanner.nextLine();
-            System.out.print("Enter your message: ");
-            String text = scanner.nextLine();
-            producer.addToQueue(name, text);
-            System.out.print("Message successfully sent!\n");
-            System.out.print("Do you want to send another message? (y / n) ");
-        } while (!scanner.nextLine().equals("n"));
+
+        for (int i = 0; i < 200; i++) {
+            producer.addToQueue("test" + i, "test" + (1000 - i));
+        }
+
+        for (int i = 0; i < 200; i++) {
+            producer.addToQueue("test" + (i + 1000), "");
+        }
+
         producer.close();
     }
 }
