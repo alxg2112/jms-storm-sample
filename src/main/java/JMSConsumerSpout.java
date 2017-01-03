@@ -9,7 +9,6 @@ import org.apache.storm.tuple.Fields;
 import javax.jms.*;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 /**
@@ -22,8 +21,8 @@ public class JMSConsumerSpout extends BaseRichSpout {
     private ActiveMQProducer jmsProducer;
     private HashMap<Object, Message> messagesToAck;
     private static final Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
-    public static AtomicInteger enqueuedMessages = new AtomicInteger(0);
-    public static AtomicInteger dequeuedMessages = new AtomicInteger(0);
+    public static Integer enqueuedMessages = 0;
+    public static Integer dequeuedMessages = 0;
 
     @Override
     public void open(Map map, TopologyContext topologyContext, SpoutOutputCollector spoutOutputCollector) {
@@ -41,7 +40,7 @@ public class JMSConsumerSpout extends BaseRichSpout {
             try {
                 Object msgId = message.hashCode();
                 messagesToAck.put(msgId, message);
-                enqueuedMessages.getAndIncrement();
+                enqueuedMessages++;
                 collector.emit(Utils.xmlMsgToTuple(message.getText()), msgId);
             } catch (JMSException e) {
                 e.printStackTrace();
@@ -58,14 +57,14 @@ public class JMSConsumerSpout extends BaseRichSpout {
     public void ack(Object msgId) {
         LOGGER.info(String.format("Ack on msgId: %s", msgId));
         messagesToAck.remove(msgId);
-        dequeuedMessages.getAndIncrement();
+        dequeuedMessages++;
     }
 
     @Override
     public void fail(Object msgId) {
         LOGGER.info(String.format("Fail on msgId: %s", msgId));
         jmsProducer.addToQueue(messagesToAck.remove(msgId));
-        dequeuedMessages.getAndIncrement();
+        dequeuedMessages++;
     }
 
     /**
@@ -79,7 +78,7 @@ public class JMSConsumerSpout extends BaseRichSpout {
         private Destination destination;
         private MessageConsumer messageConsumer;
 
-        private Message getMessage() {
+        private synchronized Message getMessage() {
             Message message = null;
 
             try {

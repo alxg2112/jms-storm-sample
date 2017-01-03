@@ -15,18 +15,18 @@ public class Topology {
     public static void main(String[] args) throws Exception {
         // Build the topology
         TopologyBuilder builder = new TopologyBuilder();
-        builder.setSpout("jmsConsumerSpout", new JMSConsumerSpout(), 5);
-        builder.setBolt("jmsProducerBolt", new JMSProducerBolt(), 5)
+        builder.setSpout("jmsConsumerSpout", new JMSConsumerSpout(), 10).setNumTasks(10);
+        builder.setBolt("jmsProducerBolt", new JMSProducerBolt(), 10).setNumTasks(10)
                 .shuffleGrouping("jmsConsumerSpout");
         Config conf = new Config();
         conf.setDebug(false);
 
         // If there are arguments, we are running on cluster, otherwise locally
         if (args != null && args.length > 0) {
-            conf.setNumWorkers(3);
+            conf.setNumWorkers(10);
             StormSubmitter.submitTopology(args[0], conf, builder.createTopology());
         } else {
-            conf.setMaxTaskParallelism(3);
+            conf.setMaxTaskParallelism(10);
             LocalCluster cluster = new LocalCluster();
             cluster.submitTopology("jmsProxy", conf, builder.createTopology());
             Thread.sleep(Utils.getProperty("clusterShutdownTimeout"));

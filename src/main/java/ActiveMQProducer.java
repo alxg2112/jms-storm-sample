@@ -62,11 +62,11 @@ public class ActiveMQProducer {
     public static void main(String[] args) {
         ActiveMQProducer producer = new ActiveMQProducer("UpstreamQueue");
 
-        for (int i = 0; i < 200; i++) {
+        for (int i = 0; i < 100; i++) {
             producer.addToQueue("test" + i, "test" + (1000 - i));
         }
 
-        for (int i = 0; i < 200; i++) {
+        for (int i = 0; i < 100; i++) {
             producer.addToQueue("test" + (i + 1000), "");
         }
 
