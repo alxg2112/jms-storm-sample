@@ -10,7 +10,7 @@ public class Topology {
     public static void main(String[] args) throws Exception {
         // Build the topology
         TopologyBuilder builder = new TopologyBuilder();
-        builder.setSpout("jmsConsumerSpout", new JMSConsumerSprout(), 5);
+        builder.setSpout("jmsConsumerSpout", new JMSConsumerSpout(), 5);
         builder.setBolt("jmsProducerBolt", new JMSProducerBolt(), 5)
                 .shuffleGrouping("jmsConsumerSpout");
         Config conf = new Config();
@@ -24,7 +24,7 @@ public class Topology {
             conf.setMaxTaskParallelism(3);
             LocalCluster cluster = new LocalCluster();
             cluster.submitTopology("jmsProxy", conf, builder.createTopology());
-            Thread.sleep(10000);
+            Thread.sleep(30000);
             cluster.shutdown();
         }
     }

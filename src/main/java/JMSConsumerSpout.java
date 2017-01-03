@@ -9,17 +9,14 @@ import org.apache.storm.tuple.Fields;
 import javax.jms.*;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.logging.Logger;
 
 /**
  * Spout that consumes message from ActiveMQ queue.
  */
-public class JMSConsumerSprout extends BaseRichSpout {
+public class JMSConsumerSpout extends BaseRichSpout {
 
     private SpoutOutputCollector collector;
-    private BlockingQueue<Message> pendingMessages;
     private ActiveMQConsumer jmsConsumer;
     private ActiveMQProducer jmsProducer;
     private HashMap<Object, Message> messagesToAck;
@@ -28,7 +25,6 @@ public class JMSConsumerSprout extends BaseRichSpout {
     @Override
     public void open(Map map, TopologyContext topologyContext, SpoutOutputCollector spoutOutputCollector) {
         collector = spoutOutputCollector;
-        pendingMessages = new LinkedBlockingDeque<>();
         messagesToAck = new HashMap<>();
         jmsConsumer = new ActiveMQConsumer();
         jmsProducer = new ActiveMQProducer("FailQueue");
@@ -36,7 +32,7 @@ public class JMSConsumerSprout extends BaseRichSpout {
 
     @Override
     public void nextTuple() {
-        TextMessage message = (TextMessage) pendingMessages.poll();
+        TextMessage message = (TextMessage) jmsConsumer.getMessage();
 
         if (message != null) {
             try {
@@ -69,39 +65,38 @@ public class JMSConsumerSprout extends BaseRichSpout {
     /**
      * Consumer that gets messages from ActiveMQ queue.
      */
-    private class ActiveMQConsumer implements Runnable, ExceptionListener {
-        public void run() {
+    private class ActiveMQConsumer {
+
+        private ActiveMQConnectionFactory connectionFactory;
+        private Connection connection;
+        private Session session;
+        private Destination destination;
+        private MessageConsumer messageConsumer;
+
+        public Message getMessage() {
+            Message message = null;
+
             try {
-                ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(
-                        ActiveMQConnection.DEFAULT_BROKER_URL);
-                Connection connection = connectionFactory.createConnection();
-                connection.start();
-                connection.setExceptionListener(this);
-                Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-                Destination destination = session.createQueue("UpstreamQueue");
-                MessageConsumer consumer = session.createConsumer(destination);
-                consumer.setMessageListener(new ConsumerMessageListener());
-            } catch (Exception e) {
-                System.out.println("Caught: " + e);
-                e.printStackTrace();
+                message = messageConsumer.receive(1000);
+            } catch (JMSException e) {
+                LOGGER.info("Exception occurred: " + e.getMessage());
             }
-        }
 
-        public synchronized void onException(JMSException ex) {
-            System.out.println("JMS Exception occurred. Shutting down client.");
-        }
-
-        /**
-         * Listener class that listens for incoming messages in ActiveMQ queue and submits them to the queue.
-         */
-        private class ConsumerMessageListener implements MessageListener {
-            public void onMessage(javax.jms.Message message) {
-                pendingMessages.offer(message);
-            }
+            return message;
         }
 
         private ActiveMQConsumer() {
-            run();
+            try {
+                connectionFactory = new ActiveMQConnectionFactory(
+                        ActiveMQConnection.DEFAULT_BROKER_URL);
+                connection = connectionFactory.createConnection();
+                connection.start();
+                session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+                destination = session.createQueue("UpstreamQueue");
+                messageConsumer = session.createConsumer(destination);
+            } catch (JMSException e) {
+                LOGGER.info("Exception occurred: " + e.getMessage());
+            }
         }
     }
 }
