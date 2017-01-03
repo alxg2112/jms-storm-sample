@@ -31,8 +31,9 @@ public class Topology {
             cluster.submitTopology("jmsProxy", conf, builder.createTopology());
             Thread.sleep(Utils.getProperty("clusterShutdownTimeout"));
             cluster.shutdown();
-            LOGGER.info("Enqueued messages: " + JMSConsumerSpout.enqueuedMessages);
-            LOGGER.info("Dequeued messages: " + JMSConsumerSpout.enqueuedMessages);
         }
+
+        LOGGER.info("Enqueued messages: " + JMSConsumerSpout.enqueuedMessages);
+        LOGGER.info("Dequeued messages: " + JMSConsumerSpout.dequeuedMessages);
     }
 }
