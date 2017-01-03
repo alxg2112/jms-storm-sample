@@ -59,15 +59,15 @@ public class JMSConsumerSpout extends BaseRichSpout {
     @Override
     public void ack(Object msgId) {
         LOGGER.info(String.format("Ack on msgId: %s", msgId));
-        dequeuedMessages.getAndIncrement();
         messagesToAck.remove(msgId);
+        dequeuedMessages.getAndIncrement();
     }
 
     @Override
     public void fail(Object msgId) {
         LOGGER.info(String.format("Fail on msgId: %s", msgId));
-        dequeuedMessages.getAndIncrement();
         jmsProducer.addToQueue(messagesToAck.remove(msgId));
+        dequeuedMessages.getAndIncrement();
     }
 
     /**
