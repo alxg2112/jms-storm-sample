@@ -22,8 +22,8 @@ public class JMSConsumerSpout extends BaseRichSpout {
     private ActiveMQProducer jmsProducer;
     private HashMap<Object, Message> messagesToAck;
     private static final Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
-    public static AtomicInteger enqueuedMessages;
-    public static AtomicInteger dequeuedMessages;
+    public static AtomicInteger enqueuedMessages = new AtomicInteger(0);
+    public static AtomicInteger dequeuedMessages = new AtomicInteger(0);
 
     @Override
     public void open(Map map, TopologyContext topologyContext, SpoutOutputCollector spoutOutputCollector) {
@@ -31,8 +31,6 @@ public class JMSConsumerSpout extends BaseRichSpout {
         messagesToAck = new HashMap<>();
         jmsConsumer = new ActiveMQConsumer();
         jmsProducer = new ActiveMQProducer("FailQueue");
-        enqueuedMessages = new AtomicInteger(0);
-        dequeuedMessages = new AtomicInteger(0);
     }
 
     @Override
