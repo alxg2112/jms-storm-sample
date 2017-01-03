@@ -1,4 +1,4 @@
-import com.sun.xml.txw2.output.IndentingXMLStreamWriter;
+import com.sun.xml.internal.txw2.output.IndentingXMLStreamWriter;
 import org.apache.storm.tuple.Values;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
