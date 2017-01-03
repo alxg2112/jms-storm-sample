@@ -19,7 +19,7 @@
     </build>
 
     <groupId>org.apache.storm</groupId>
-    <artifactId>storm-storm-sample</artifactId>
+    <artifactId>jms-storm-sample</artifactId>
     <packaging>jar</packaging>
 
     <name>jms-storm-sample</name>
