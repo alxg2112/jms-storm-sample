@@ -8,7 +8,7 @@ import javax.jms.*;
  */
 public class ActiveMQProducer {
 
-    private  String queueName;
+    private String queueName;
     private ConnectionFactory connectionFactory;
     private Connection connection;
     private Session session;
@@ -59,14 +59,11 @@ public class ActiveMQProducer {
         }
     }
 
-    public static void main(String[] args) {
+    public static void generateSampleData() {
         ActiveMQProducer producer = new ActiveMQProducer("UpstreamQueue");
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 1000; i++) {
             producer.addToQueue("test" + i, "test" + (1000 - i));
-        }
-
-        for (int i = 0; i < 100; i++) {
             producer.addToQueue("test" + (i + 1000), "");
         }
 

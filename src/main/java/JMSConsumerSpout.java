@@ -78,7 +78,7 @@ public class JMSConsumerSpout extends BaseRichSpout {
         private Destination destination;
         private MessageConsumer messageConsumer;
 
-        private synchronized Message getMessage() {
+        private Message getMessage() {
             Message message = null;
 
             try {

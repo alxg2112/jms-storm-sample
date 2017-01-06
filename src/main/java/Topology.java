@@ -13,20 +13,23 @@ public class Topology {
     private static final Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
     public static void main(String[] args) throws Exception {
+
+        // Generate sample messages in ActiveMQ queue
+        ActiveMQProducer.generateSampleData();
+
         // Build the topology
         TopologyBuilder builder = new TopologyBuilder();
-        builder.setSpout("jmsConsumerSpout", new JMSConsumerSpout(), 10).setNumTasks(10);
-        builder.setBolt("jmsProducerBolt", new JMSProducerBolt(), 10).setNumTasks(10)
+        builder.setSpout("jmsConsumerSpout", new JMSConsumerSpout(), 100);
+        builder.setBolt("jmsProducerBolt", new JMSProducerBolt(), 100)
                 .shuffleGrouping("jmsConsumerSpout");
         Config conf = new Config();
         conf.setDebug(false);
+        conf.setNumWorkers(10);
 
         // If there are arguments, we are running on cluster, otherwise locally
         if (args != null && args.length > 0) {
-            conf.setNumWorkers(10);
             StormSubmitter.submitTopology(args[0], conf, builder.createTopology());
         } else {
-            conf.setMaxTaskParallelism(10);
             LocalCluster cluster = new LocalCluster();
             cluster.submitTopology("jmsProxy", conf, builder.createTopology());
             Thread.sleep(Utils.getProperty("clusterShutdownTimeout"));
@@ -35,5 +38,6 @@ public class Topology {
 
         LOGGER.info("Enqueued messages: " + JMSConsumerSpout.enqueuedMessages);
         LOGGER.info("Dequeued messages: " + JMSConsumerSpout.dequeuedMessages);
+        System.exit(0);
     }
 }
