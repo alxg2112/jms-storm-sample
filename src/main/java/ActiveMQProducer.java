@@ -64,7 +64,6 @@ public class ActiveMQProducer {
 
         for (int i = 0; i < 1000; i++) {
             producer.addToQueue("test" + i, "test" + (1000 - i));
-            producer.addToQueue("test" + (i + 1000), "");
         }
 
         producer.close();

@@ -67,6 +67,11 @@ public class JMSConsumerSpout extends BaseRichSpout {
         dequeuedMessages++;
     }
 
+    @Override
+    public void close() {
+        jmsConsumer.close();
+    }
+
     /**
      * Consumer that gets messages from ActiveMQ queue.
      */
@@ -88,6 +93,14 @@ public class JMSConsumerSpout extends BaseRichSpout {
             }
 
             return message;
+        }
+
+        public void close() {
+            try {
+                connection.close();
+            } catch (JMSException e) {
+                e.printStackTrace();
+            }
         }
 
         private ActiveMQConsumer() {
