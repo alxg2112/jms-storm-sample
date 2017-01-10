@@ -6,7 +6,6 @@ import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
 
 import java.util.Map;
-import java.util.logging.Logger;
 
 /**
  * Bolt that submits message to ActiveMQ queue.
@@ -15,7 +14,6 @@ public class JMSProducerBolt extends BaseRichBolt {
 
     private ActiveMQProducer jmsProducer;
     private OutputCollector collector;
-    private static final Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
