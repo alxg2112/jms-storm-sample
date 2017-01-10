@@ -19,12 +19,14 @@ public class Topology {
 
         // Build the topology
         TopologyBuilder builder = new TopologyBuilder();
-        builder.setSpout("jmsConsumerSpout", new JMSConsumerSpout(), 100);
-        builder.setBolt("jmsProducerBolt", new JMSProducerBolt(), 100)
+        builder.setSpout("jmsConsumerSpout", new JMSConsumerSpout(),
+                Utils.getProperty("jmsConsumerSpoutParallelism"));
+        builder.setBolt("jmsProducerBolt", new JMSProducerBolt(),
+                Utils.getProperty("jmsProducerBoltParallelism"))
                 .shuffleGrouping("jmsConsumerSpout");
         Config conf = new Config();
         conf.setDebug(false);
-        conf.setNumWorkers(10);
+        conf.setNumWorkers(Utils.getProperty("clusterNumWorkers"));
 
         // If there are arguments, we are running on cluster, otherwise locally
         if (args != null && args.length > 0) {
