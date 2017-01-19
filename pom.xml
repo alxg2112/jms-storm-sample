@@ -38,6 +38,12 @@
             <artifactId>storm-core</artifactId>
             <version>${storm.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.xbean</groupId>
+            <artifactId>xbean-spring</artifactId>
+            <version>3.7</version>
+        </dependency>
     </dependencies>
 
 </project>

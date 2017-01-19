@@ -10,9 +10,9 @@ import java.util.Map;
 /**
  * Bolt that submits message to ActiveMQ queue.
  */
-public class JMSProducerBolt extends BaseRichBolt {
+public class JmsProducerBolt extends BaseRichBolt {
 
-    private ActiveMQProducer jmsProducer;
+    private JmsMessageProducer jmsProducer;
     private OutputCollector collector;
 
     @Override
@@ -22,8 +22,9 @@ public class JMSProducerBolt extends BaseRichBolt {
 
     @Override
     public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
-        jmsProducer = new ActiveMQProducer("DownstreamQueue");
         this.collector = outputCollector;
+        jmsProducer = new JmsMessageProducer("storm-jms.xml", "jmsConnectionFactory",
+                "downstreamQueue");
     }
 
     @Override

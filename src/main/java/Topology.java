@@ -2,44 +2,53 @@ import org.apache.storm.Config;
 import org.apache.storm.LocalCluster;
 import org.apache.storm.StormSubmitter;
 import org.apache.storm.topology.TopologyBuilder;
-
-import java.util.logging.Logger;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
  * Main class used to start topology.
  */
 public class Topology {
 
-    private static final Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
-
     public static void main(String[] args) throws Exception {
 
         // Generate sample messages in ActiveMQ queue
-        ActiveMQProducer.generateSampleData();
+        JmsMessageProducer.generateSampleData();
+
+        // Get configuration properties
+        ApplicationContext context = new ClassPathXmlApplicationContext("storm-jms.xml");
+        int jmsConsumerSpoutParallelism = (Integer)context.getBean("jmsConsumerSpoutParallelism");
+        int jmsProducerBoltParallelism = (Integer)context.getBean("jmsProducerBoltParallelism");
+        int clusterNumWorkers = (Integer)context.getBean("clusterNumWorkers");
+        int clusterShutdownTimeout = (Integer)context.getBean("clusterShutdownTimeout");
+
+        // JMS consumer spout
+        JmsConsumerSpout jmsConsumerSpout = new JmsConsumerSpout();
+
+        // JMS producer bolt
+        JmsProducerBolt jmsProducerBolt = new JmsProducerBolt();
 
         // Build the topology
         TopologyBuilder builder = new TopologyBuilder();
-        builder.setSpout("jmsConsumerSpout", new JMSConsumerSpout(),
-                Utils.getProperty("jmsConsumerSpoutParallelism"));
-        builder.setBolt("jmsProducerBolt", new JMSProducerBolt(),
-                Utils.getProperty("jmsProducerBoltParallelism"))
+        builder.setSpout("jmsConsumerSpout", jmsConsumerSpout,
+                jmsConsumerSpoutParallelism);
+        builder.setBolt("jmsProducerBolt", jmsProducerBolt,
+                jmsProducerBoltParallelism)
                 .shuffleGrouping("jmsConsumerSpout");
         Config conf = new Config();
         conf.setDebug(false);
-        conf.setNumWorkers(Utils.getProperty("clusterNumWorkers"));
+        conf.setNumWorkers(clusterNumWorkers);
 
         // If there are arguments, we are running on cluster, otherwise locally
         if (args != null && args.length > 0) {
             StormSubmitter.submitTopology(args[0], conf, builder.createTopology());
         } else {
             LocalCluster cluster = new LocalCluster();
-            cluster.submitTopology("jmsProxy", conf, builder.createTopology());
-            Thread.sleep(Utils.getProperty("clusterShutdownTimeout"));
+            cluster.submitTopology("storm-jms", conf, builder.createTopology());
+            Thread.sleep(clusterShutdownTimeout);
             cluster.shutdown();
         }
-
-        LOGGER.info("Enqueued messages: " + JMSConsumerSpout.enqueuedMessages);
-        LOGGER.info("Dequeued messages: " + JMSConsumerSpout.dequeuedMessages);
+        
         System.exit(0);
     }
 }

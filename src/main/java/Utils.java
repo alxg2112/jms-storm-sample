@@ -1,4 +1,3 @@
-import com.sun.xml.internal.txw2.output.IndentingXMLStreamWriter;
 import org.apache.storm.tuple.Values;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -11,8 +10,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
-import java.io.*;
-import java.util.Properties;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.logging.Logger;
 
 /**
@@ -37,8 +36,7 @@ public class Utils {
             // Create XMLStreamWriter
             StringWriter stringWriter = new StringWriter();
             XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newInstance();
-            XMLStreamWriter xmlStreamWriter =
-                    new IndentingXMLStreamWriter(xmlOutputFactory.createXMLStreamWriter(stringWriter));
+            XMLStreamWriter xmlStreamWriter = xmlOutputFactory.createXMLStreamWriter(stringWriter);
 
             // Start document
             xmlStreamWriter.writeStartDocument();
@@ -99,29 +97,5 @@ public class Utils {
         }
 
         return new Values(name, text);
-    }
-
-    public static int getProperty(String property) {
-        Properties properties = new Properties();
-        InputStream input = null;
-        int propertyValue = 0;
-
-        try {
-            input = new FileInputStream("resources\\config.properties");
-            properties.load(input);
-            propertyValue = Integer.parseInt(properties.getProperty(property));
-        } catch (IOException e) {
-            LOGGER.info("Exception occurred: " + e.getMessage());
-        } finally {
-            if (input != null) {
-                try {
-                    input.close();
-                } catch (IOException e) {
-                    LOGGER.info("Exception occurred: " + e.getMessage());
-                }
-            }
-        }
-
-        return propertyValue;
     }
 }

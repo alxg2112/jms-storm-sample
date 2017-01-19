@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans
+        xmlns="http://www.springframework.org/schema/beans"
+        xmlns:amq="http://activemq.apache.org/schema/core"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+  http://activemq.apache.org/schema/core http://activemq.apache.org/schema/core/activemq-core.xsd">
+
+    <amq:queue id="upstreamQueue" physicalName="upstreamQueue"/>
+
+    <amq:queue id="failQueue" physicalName="failQueue"/>
+
+    <amq:queue id="downstreamQueue" physicalName="downstreamQueue"/>
+
+    <amq:connectionFactory id="jmsConnectionFactory" brokerURL="tcp://localhost:61616"/>
+
+    <bean id="jmsReceiveTimeout" class="java.lang.Integer">
+        <constructor-arg type="java.lang.String" value="1000"/>
+    </bean>
+
+    <bean id="jmsConsumerSpoutParallelism" class="java.lang.Integer">
+        <constructor-arg type="java.lang.String" value="100"/>
+    </bean>
+
+    <bean id="jmsProducerBoltParallelism" class="java.lang.Integer">
+        <constructor-arg type="java.lang.String" value="100"/>
+    </bean>
+
+    <bean id="clusterNumWorkers" class="java.lang.Integer">
+        <constructor-arg type="java.lang.String" value="3"/>
+    </bean>
+
+    <bean id="clusterShutdownTimeout" class="java.lang.Integer">
+        <constructor-arg type="java.lang.String" value="80000"/>
+    </bean>
+
+</beans>
