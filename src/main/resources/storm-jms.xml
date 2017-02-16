@@ -12,18 +12,18 @@
 
     <amq:queue id="downstreamQueue" physicalName="downstreamQueue"/>
 
-    <amq:connectionFactory id="jmsConnectionFactory" brokerURL="tcp://localhost:61616"/>
+    <amq:connectionFactory id="jmsConnectionFactory" brokerURL="tcp://192.168.50.1:61616"/>
 
     <bean id="jmsReceiveTimeout" class="java.lang.Integer">
         <constructor-arg type="java.lang.String" value="1000"/>
     </bean>
 
     <bean id="jmsConsumerSpoutParallelism" class="java.lang.Integer">
-        <constructor-arg type="java.lang.String" value="100"/>
+        <constructor-arg type="java.lang.String" value="20"/>
     </bean>
 
     <bean id="jmsProducerBoltParallelism" class="java.lang.Integer">
-        <constructor-arg type="java.lang.String" value="100"/>
+        <constructor-arg type="java.lang.String" value="20"/>
     </bean>
 
     <bean id="clusterNumWorkers" class="java.lang.Integer">

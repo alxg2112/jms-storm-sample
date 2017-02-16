@@ -16,6 +16,20 @@
                     <target>1.7</target>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.path.to.main.Class</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
@@ -23,7 +37,7 @@
 
     <properties>
         <storm.version>1.0.2</storm.version>
-        <activemq.version>5.7.0</activemq.version>
+        <activemq.version>5.4.0</activemq.version>
     </properties>
 
     <dependencies>
@@ -37,6 +51,7 @@
             <groupId>org.apache.storm</groupId>
             <artifactId>storm-core</artifactId>
             <version>${storm.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
